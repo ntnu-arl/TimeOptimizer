@@ -1,21 +1,27 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(time_optimizer)
 
-#add_subdirectory(${PROJECT_SOURCE_DIR}/utils/waypoint_generator)
-#add_subdirectory(${PROJECT_SOURCE_DIR}/utils/rviz_plugins)
 
 find_package(catkin REQUIRED COMPONENTS roscpp std_msgs nav_msgs visualization_msgs tf)
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3 -Wall")
+set(CMAKE_BUILD_TYPE "Release")
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
-catkin_package()
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+#   CATKIN_DEPENDS roscpp
+#  DEPENDS other non-ROS libs
+)
 
 include_directories(${PROJECT_SOURCE_DIR}/third_party/include)
 include_directories(
     SYSTEM 
     third_party
+    include
     ${catkin_INCLUDE_DIRS}
     ${Eigen3_INCLUDE_DIRS} 
     ${PCL_INCLUDE_DIRS}
@@ -24,13 +30,25 @@ include_directories(
 link_directories( ${PROJECT_SOURCE_DIR}/third_party/lib/mosek8_1 )
 link_directories(${PCL_LIBRARY_DIRS})
 
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3 -Wall")
-set(CMAKE_BUILD_TYPE "Release")
 
 add_executable(demo 
     src/demo.cpp
     src/time_optimizer.cpp
     src/trajectory_generator_waypoint.cpp )
+
+add_library(${PROJECT_NAME} src/time_optimizer.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+install(
+  DIRECTORY include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 target_link_libraries(demo 
     ${catkin_LIBRARIES} ${PCL_LIBRARIES} mosek64 )
